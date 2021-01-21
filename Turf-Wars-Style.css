@@ -1,0 +1,125 @@
+/* -----------------------------------------  */
+/* SECTION 1: GENERAL STYLE  */
+/* -----------------------------------------  */
+
+body {
+  margin: 0;
+  padding: 0;
+  color: rgb(0, 0, 0);
+  font-family: "PT Serif", Georgia, "Times New Roman", Times, serif;
+  overflow: hidden;
+}
+
+/* stops any text from accidentally getting selected when using the slider  */
+body * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* styles all general text  */
+h2,
+h3 {
+  color: #31339e;
+  padding-bottom: 3px;
+  margin-bottom: 10px;
+  border-bottom: #31339e 1px solid;
+  font-family: "PT Serif", Georgia, "Times New Roman", Times, serif;
+  text-align: left;
+}
+
+p {
+  font-size: 14px;
+}
+
+em {
+  font-style: normal;
+  font-weight: 700;
+  color: #31339e;
+}
+
+/* -----------------------------------------  */
+/* SECTION 1: STYLE FOR THE MAP LAYOUT ELEMENTS  */
+/* -----------------------------------------  */
+
+.map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+/* style for all the overlaid boxes */
+.map-overlay {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 1);
+  margin: 20px;
+  padding: 20px;
+  padding-top: 5px;
+  font-family: "PT Sans", "Gill Sans", "Gill Sans MT", Calibri, sans-serif;
+  overflow: auto;
+  border-radius: 3px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+
+}
+
+#title {
+  top: 0;
+  left: 0;
+  height: 250px;
+  width: 300px;
+}
+
+.legend {
+  line-height: 18px;
+  font-size: 14px;
+}
+
+.condensed {
+  margin: 3px;
+}
+
+/* styles the circles in the legend */
+.legend-circle {
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 10px;
+  border: 1px black solid;
+}
+
+/* styles the squares in the legend */
+.legend-patch {
+  display: inline-block;
+  margin-right: 10px;
+}
+
+/* eliminates unnecessary line breaks in the legend */
+.legend-status span {
+  margin-left: 5px;
+  display: inline-block;
+}
+
+#clubs-overlay {
+  bottom: 50px;
+  left: 0;
+  height: 250px;
+  width: 200px;
+  overflow: hidden;
+}
+
+#clubLogo {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
+
+#competition-overlay {
+  bottom: 50px;
+  height: 200px;
+  width: 200px;
+}

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Turf Wars</title>
+
+    <link rel="icon" type="image/png" href="bullet.png" sizes="16x16">
+
+    <!-- mapbox links -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css' rel='stylesheet' />
+
+    <!-- mapbox GL API for the map comparison slider  -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.js"></script>
+    <link rel="stylesheet"
+        href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.css"
+        type="text/css" />
+
+    <!-- Google fonts API for typefaces -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&family=PT+Sans:wght@400;700&family=PT+Serif:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- my project stylesheet  -->
+    <link rel="stylesheet" href="Turf-Wars-Style.css">
+</head>
+
+<body>
+    <div id="comparison-container">
+        <div id="clubsMapContainer" class="map"></div>
+        <div id="leaguesMapContainer" class="map"></div>
+    </div>
+
+    <div id='title' class='map-overlay'>
+        <h2>Turf Wars</h2>
+        <p>How widespread are Australia's four football codes across Western Australia and the Northern territory?</p>
+        <div id="legend" class="legend">
+            <div class="legend-status">
+                <span class="legend-circle" style="background-color: rgb(230, 0, 0); width: 10px; height: 10px;"></span>
+                <span class="legend-patch"
+                    style="background-color: rgba(230, 0, 0, 0.8); width: 12px; height: 12px;"></span>
+                <span class='condensed'>Australian rules clubs/zones</span></div>
+            <div class="legend-status">
+                <span class="legend-circle"
+                    style="background-color: rgb(197, 0, 255); width: 10px; height: 10px;"></span>
+                <span class="legend-patch"
+                    style="background-color: rgba(197, 0, 255, 0.8); width: 12px; height: 12px;"></span>
+                <span class='condensed'>Rugby league clubs/zones</span></div>
+            <div class="legend-status">
+                <span class="legend-circle"
+                    style="background-color: rgb(0, 169, 230); width: 10px; height: 10px;"></span>
+                <span class="legend-patch"
+                    style="background-color: rgba(0, 169, 230, 0.8); width: 12px; height: 12px;"></span>
+                <span class='condensed'>rugby union clubs/zones</span></div>
+            <div class="legend-status">
+                <span class="legend-circle"
+                    style="background-color: rgb(76, 230, 0); width: 10px; height: 10px;"></span>
+                <span class="legend-patch"
+                    style="background-color: rgba(76, 230, 0, 0.8); width: 12px; height: 12px;"></span>
+                <span class='condensed'>Soccer clubs/zones</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="clubs-overlay" class="map-overlay">
+        <h3>Local football clubs</h3>
+        <div id='clubName'>
+            <p>Hover or click on a club to discover more</p>
+        </div>
+        <div id='clubLogo'><img src="https://live.staticflickr.com/65535/50518962123_1cec265331_o.jpg" alt="footy logo"
+                width="100"></div>
+    </div>
+
+    <div id="competition-overlay" class="map-overlay">
+        <h3>Local football club competitions</h3>
+        <div id='compName'>
+            <p>Hover or click on a league's zone to discover more</p>
+        </div>
+        <div id='compArea'></div>
+    </div>
+
+
+    <script>
+        // --------------------------------------------
+        // SECTION 1: ESTABLISH THE MAPS AND THE SWIPER
+        // --------------------------------------------
+
+        mapboxgl.accessToken = 'pk.eyJ1IjoiaGVsZW53YWwiLCJhIjoiY2tkNTE2N3BxMWE3MTJybzMxc3RocW0yNCJ9.TnX-HlxcbISLvgMkl5byhA';
+
+        // create a map to appear on the left of screen to show clubs data
+        var clubsMap = new mapboxgl.Map({
+            container: 'clubsMapContainer',
+            style: 'mapbox://styles/helenwal/ckgiqqpzj0dyx1amveusgrvnx', // I've used this customised basemap instead of a sat image, because I want the experience to be more like a game. I've used cartoony colours and removed unnecessary detail like street names.
+            center: [126, -23],
+            zoom: 4.4,
+            // maxZoom: 16.5,
+            // minZoom: 13.5,
+            maxBounds: [[82, -45], [178, -3]]
+        });
+
+        // create a map to appear on the right of screen to show leagues data
+        var leaguesMap = new mapboxgl.Map({
+            container: 'leaguesMapContainer',
+            style: 'mapbox://styles/helenwal/ckgn9oxxm060o19nrzutglu3n', // same basemap but with styled polygons
+            center: [126, -23],
+            zoom: 4.4,
+            // maxZoom: 16.5,
+            // minZoom: 13.5,
+            maxBounds: [[82, -45], [178, -3]]
+        });
+
+        // create a swiper between clubs and leagues maps
+        var container = '#comparison-container';
+        var map = new mapboxgl.Compare(clubsMap, leaguesMap, container);
+
+
+        clubsMap.on('load', function () {
+
+            // --------------------------------------------
+            // SECTION 2: ADD BASIC MAP INTERACTION (cursor, widgets etc)
+            // --------------------------------------------
+
+            // add navigation control widgets to both maps so it never disappears behind a swipe, remove compass control
+            clubsMap.addControl(new mapboxgl.NavigationControl({ showCompass: false, }), 'top-right');
+            leaguesMap.addControl(new mapboxgl.NavigationControl({ showCompass: false, }), 'top-right');
+
+            // when mouse is over a point change the cursor to a pointer 
+            clubsMap.on('mouseenter', 'club points', function () { clubsMap.getCanvas().style.cursor = 'pointer'; });
+            leaguesMap.on('mouseenter', 'TurfWarsZonePolygons', function () { leaguesMap.getCanvas().style.cursor = 'pointer'; });
+
+            // and then change it back to default map pan cursor
+            clubsMap.on('mouseleave', 'club points', function () { clubsMap.getCanvas().style.cursor = ''; });
+            leaguesMap.on('mouseleave', 'TurfWarsZonePolygons', function () { leaguesMap.getCanvas().style.cursor = ''; });
+
+            // add a scale bar to each map
+            clubsMap.addControl(new mapboxgl.ScaleControl({ position: 'bottom-left' }));
+            leaguesMap.addControl(new mapboxgl.ScaleControl({ position: 'bottom-left', }));
+
+
+            // --------------------------------------------
+            // SECTION 3: ADD FUNCTIONALITY TO THE LEFT SIDE OF THE MAP (clubs)
+            // --------------------------------------------
+
+            //declare variables
+            var sportNames = ['Australian rules', 'rugby league', 'rugby union', 'soccer']; //match to 'SPORT' field in attribute table
+            var sportColors = ['#E60000', '#C500FF', '#00A9E6', '#4CE600'];
+
+            // add the club points data layer to the lefthand map
+            clubsMap.addLayer({
+                'id': 'club points',
+                'type': 'circle',
+                'source': {
+                    type: 'vector',
+                    url: 'mapbox://helenwal.09xmzf1e', // Mapbox Tileset Map ID
+                },
+                'source-layer': 'TurfWarsMasterSHP-489jj4', // Name of the points layer 
+                paint: {
+                    'circle-color': ['match', //allocates colours based on sport category
+                        ['get', 'SPORT'],
+                        sportNames[0], sportColors[0],
+                        sportNames[1], sportColors[1],
+                        sportNames[2], sportColors[2],
+                        sportNames[3], sportColors[3],
+                        '#ffffff' //default colour
+                    ],
+                    'circle-opacity': 0.9,
+                    'circle-stroke-width': 1,
+                    'circle-stroke-color': '#000000',
+                    'circle-radius': 6,
+                }
+            });
+
+            // add a layer to identify and match up clubs that play in the same league
+            clubsMap.addLayer({
+                'id': 'comp-matchups',
+                'type': 'circle',
+                'source': {
+                    type: 'vector',
+                    url: 'mapbox://helenwal.09xmzf1e',
+                },
+                'source-layer': 'TurfWarsMasterSHP-489jj4',
+                'paint': {
+                    'circle-color': '#ffffff',
+                    'circle-opacity': 0.0,
+                    'circle-radius': 5 // small radius means this layer is hidden beneath 'club points'
+                }
+            }, 'club points' // place this layer beneath the 'club points' layer
+            );
+
+            // HOVER ACTION: when user hovers overs over a club, send attribute text to the overlay box 
+            // do not remove text until user hovers over another club 
+            clubsMap.on('mousemove', 'club points', (e) => {
+                // Check whether features exist
+                if (e.features.length > 0) {
+                    // Display the club's data in the sidebar
+                    document.getElementById('clubName').innerHTML =
+                        '<p> The <em>' + e.features[0].properties.NAME +
+                        '</em> play ' + e.features[0].properties.SPORT +
+                        ' in the <em>' + e.features[0].properties.COMPETITIO +
+                        '</em> and are based in ' + e.features[0].properties.SUBURB +
+                        ', ' + e.features[0].properties.STATE + '.</p>';
+
+                    document.getElementById('clubLogo').innerHTML = '<img src="' + e.features[0].properties.FLICKR_URL + '" alt = "' + e.features[0].properties.NAME + ' logo" width = "100px" >';
+                }
+            });
+
+            // CLICK ACTION: when the user clicks a club, add a layer with large circles to highlight other clubs in same competition zone
+            clubsMap.on('click', 'comp-matchups', function (g) {
+                clubsMap.addLayer({
+                    'id': 'comp-matchups-highlighted',
+                    'type': 'circle',
+                    'source': {
+                        type: 'vector',
+                        url: 'mapbox://helenwal.09xmzf1e', // Mapbox Tileset Map ID
+                    },
+                    'source-layer': 'TurfWarsMasterSHP-489jj4', // Name of the points layer 
+                    'paint': {
+                        'circle-color': ['match', //allocates colours based on sport category
+                            ['get', 'SPORT'],
+                            sportNames[0], sportColors[0],
+                            sportNames[1], sportColors[1],
+                            sportNames[2], sportColors[2],
+                            sportNames[3], sportColors[3],
+                            '#ffffff' //default colour
+                        ],
+                        'circle-opacity': 0.6,
+                        'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 20, 12, 40] // enlarges circles slightly on map zoom
+                    }
+                }, 'club points'
+                );
+
+                // Single out the first found feature.
+                var feature1 = g.features[0];
+
+                // Query the comp-matchups layer visible in the map. Use the filter to only collect results that share the same competition-zones name.
+                clubsMap.querySourceFeatures('comp-matchups', {
+                    sourceLayer: 'mapbox://helenwal.09xmzf1e',
+                    filter: ['in', 'COMPETITIO', feature1.properties.COMPETITIO]
+                });
+
+                // Add features that share the same comp-matchups name to the highlighted layer.
+                clubsMap.setFilter('comp-matchups-highlighted', [
+                    'in',
+                    'COMPETITIO',
+                    feature1.properties.COMPETITIO
+                ]);
+            });
+
+
+            // ----------------------------------------- 
+            // SECTION 3: ADD FUNCTIONALITY TO THE RIGHT SIDE OF THE MAP (competitions)
+            // ----------------------------------------- 
+
+            // HOVER ACTION: when user hovers over a polygon, send info about each competition to the competition-overlay box
+            // Do not remove data until next polygon is hovered
+            leaguesMap.on('mousemove', function (i) {
+                var leagueInfo = leaguesMap.queryRenderedFeatures(i.point, {
+                    layers: ['TurfWarsZonePolygons']
+                });
+                function numberWithCommas(x) {
+                    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                }
+                function stateConversion(x) {
+                    if (x == 'NT') {
+                        return 'the Northern Territory.'
+                    } else {
+                        return 'Western Australia.'
+                    }
+                }
+                if (leagueInfo.length > 0) {
+                    document.getElementById('compName').innerHTML =
+                        '<p> The <em>' + leagueInfo[0].properties.COMPETITIO +
+                        '</em> covers <em>' + numberWithCommas(leagueInfo[0].properties.AREA) +
+                        ' square kilometres</em> of ' + stateConversion(leagueInfo[0].properties.STATE) +
+                        '</p>';
+                }
+            });
+
+            // CLICK ACTION: when user clicks on a polygon, highlight all other polygons for this sport
+            leaguesMap.on('click', 'TurfWarsZonePolygons', function (g) {
+                // add the competition polygons data layer to the righthand map
+                console.log("click")
+                leaguesMap.addLayer({
+                    'id': 'TurfWarsZones-highlight',
+                    'source': {
+                        type: 'vector',
+                        url: 'mapbox://helenwal.b7kmil6w',
+                    },
+                    'source-layer': 'TurfWarsZonesSHP-cxcmrs',
+                    'type': 'fill',
+                    'paint': {
+                        'fill-color': ['match',
+                            ['get', 'SPORT'],
+                            'Australian football', sportColors[0],
+                            'rugby league', sportColors[1],
+                            'rugby union', sportColors[2],
+                            'soccer', sportColors[3],
+                            '#ffffff' //default colour
+                        ],
+                        'fill-opacity': 0.6,
+                    }
+                });
+
+                // Single out the first found feature.
+                var feature1 = g.features[0];
+
+                // Query the comp-matchups layer visible in the map. Use the filter to only collect results that share the same competition-zones name.
+                leaguesMap.querySourceFeatures('TurfWarsZonePolygons', {
+                    sourceLayer: 'TurfWarsZonesSHP-cxcmrs',
+                    filter: ['in', 'SPORT', feature1.properties.SPORT]
+                });
+
+                // Add features that share the same sport as the highlighted layer.
+                leaguesMap.setFilter('TurfWarsZones-highlight', [
+                    'in',
+                    'SPORT',
+                    feature1.properties.SPORT
+                ]);
+            });
+        });
+    </script>
+</body>
+
+</html>
